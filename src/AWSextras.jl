@@ -2,7 +2,7 @@ module AWSextras
     using AWSCore
 	using AWSS3
     using Blosc
-    using ..common
+    using ..common: file_parts
 
     export array_put
     """
@@ -15,7 +15,7 @@ module AWSextras
 
         function array_put{DT<:Number}(aws::AWSCore.AWSConfig,
             bucket::String,path::String,array::DenseArray{DT};
-            level::Int=1)
+            level::Int=1,max_size::Int=2000)
 
     # Arguments
 
@@ -24,14 +24,16 @@ module AWSextras
     - `path`: file key/path name
     - `array`: dense numeric array
     - `level`: Blosc compression level (0-9); 1 is typically OK, anything above 5 is typically an over-kill
+    - `max_size`: maximum array size (MB<=2000) before going into multi-part mode
 
     # Examples
 
     - `array_put(aws,"slimbucket","tmp/test/small",a)`: put array `a` into bucket `slimbucket` under path `tmp/test/small`
 
     """
-    function array_put{DT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,a::DenseArray{DT};level::Int=1)
-        cmp_max=(2*1020^3) #blosc compression max 2147483631 bytes < (2*1024^3)
+    function array_put{DT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,a::DenseArray{DT};level::Int=1,max_size::Int=2000)
+        max_size > 2000 && warn("S3 array_put: given max_size > 2000; using default 2000")
+        cmp_max=min(2000*1024^2,max_size*1024^2) #blosc compression max 2147483631 bytes < (2*1024^3)
         if sizeof(a)<cmp_max # single file
             szs=size(a)
             dims=length(szs)
@@ -43,7 +45,7 @@ module AWSextras
 	        s3_put(aws, bucket, path, ac, tags=tags);
             return nothing
         else # multi-part files
-            #warn("S3 array_put: large file - going into multi-part mode";key="array_put",once=true)
+            #warn("S3 array_put: large array - going into multi-part mode";key="AWS S3 array_put",once=true)
             szs=size(a)
             dims=length(szs)
             (nfiles,nelmts,parts,idxs,idxe)=file_parts(a,cmp_max)

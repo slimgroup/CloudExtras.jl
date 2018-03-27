@@ -21,7 +21,7 @@ Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 
 1. putting/getting dense numerical numerical arrays for AWS S3 in module `CloudExtras.AWSextras`
 
-	- `array_put{DT<:Number}(aws::AWSCore.AWSConfig, bucket::String, path::String, a::DenseArray{DT}; level::Int=1)`
+	- `array_put{DT<:Number}(aws::AWSCore.AWSConfig, bucket::String, path::String, a::DenseArray{DT}; level::Int=1,max_size::Int=2000)`
 	- `array_get(aws::AWSCore.AWSConfig, bucket::String, path::String)`
 	- `array_delete(aws::AWSCore.AWSConfig, bucket::String, path::String)`
 
@@ -31,8 +31,9 @@ Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 	- `bucket` is AWS S3 bucket name
 	- `path` is AWS S3 file key/path
 	- `level` is compression level (0-9); 1 is typically good enough while anything above 5 is hardly ever usefull and computationally taxing
+    - `max_size`: maximum array size (MB<=2000) before going into multi-part mode
 
-	Note! Arrays with sizes above 2GB will be splitted into multiple, roughly same-size, files to reduce memory overhead while writing and reading arrays.
+	Note! Arrays with sizes above 2000MB will be splitted into multiple, roughly same-size, files to reduce memory overhead while writing and reading arrays.
 
 2. to be continued
 
