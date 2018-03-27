@@ -32,6 +32,11 @@ Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 	- `path` is AWS S3 file key/path
 	- `level` is compression level (0-9); 1 is typically good enough while anything above 5 is hardly ever usefull and computationally taxing
 
+	Note! Arrays with sizes above 2GB will be splitted into multiple, roughly same-size, files to reduce memory overhead while writing and reading arrays.
+
+2. to be continued
+
+
 ## Using With Multiple Clouds ##
 
 Not needed yet, but the difference is in loading and calling functions. This may lead to name conflicts when different Cloud providers are mixed in the same code:
