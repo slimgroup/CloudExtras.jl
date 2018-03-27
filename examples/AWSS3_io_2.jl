@@ -1,5 +1,5 @@
 # AWS S3 example
-# to put array into a bucket 'slimbucket' under name 'tmp/test/small' 
+# to put array into a bucket 'slimbucket' in region 'us-west-2' under name 'tmp/test/small' 
 
 # safe only if using one Cloud provider
 
