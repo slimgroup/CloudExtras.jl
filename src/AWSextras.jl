@@ -5,6 +5,31 @@ module AWSextras
     using ..common
 
     export array_put
+    """
+
+        julia> array_put(aws,bucket,path,array;[level])
+
+    Saves array to AWS S3 bucket.
+
+    # Signature
+
+        function array_put{DT<:Number}(aws::AWSCore.AWSConfig,
+            bucket::String,path::String,array::DenseArray{DT};
+            level::Int=1)
+
+    # Arguments
+
+    - `aws`: aws config created by AWSCore.aws_config
+    - `bucket`: name of AWS S3 bucket
+    - `path`: file key/path name
+    - `array`: dense numeric array
+    - `level`: compression level (1 is typically OK, anything above 5 is typically an over-kill)
+
+    # Examples
+
+    - `array_put(aws,"slimbucket","tmp/test/small",a)`: put array `a` into bucket `slimbucket` under path `tmp/test/small`
+
+    """
     function array_put{DT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,a::DenseArray{DT};level::Int=1)
         cmp_max=(2*1020^3) #blosc compression max 2147483631 bytes < (2*1024^3)
         if sizeof(a)<cmp_max # single file
@@ -45,6 +70,28 @@ module AWSextras
     end
 
     export array_get
+    """
+
+        julia> array_get(aws,bucket,path)
+
+    Reads array from AWS S3 bucket.
+
+    # Signature
+
+        function array_get(aws::AWSCore.AWSConfig,
+            bucket::String,path::String)
+
+    # Arguments
+
+    - `aws`: aws config created by AWSCore.aws_config
+    - `bucket`: name of AWS S3 bucket
+    - `path`: file key/path name
+
+    # Examples
+
+    - `A=array_get(aws,"slimbucket","tmp/test/small")`: gets array `a` from bucket `slimbucket` and path `tmp/test/small`
+
+    """
     function array_get(aws::AWSCore.AWSConfig,bucket::String,path::String)
         s3_exists(aws, bucket, path) || error("AWSS3/array_get: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
@@ -85,6 +132,28 @@ module AWSextras
     end
 
     export array_delete
+    """
+
+        julia> array_delete(aws,bucket,path)
+
+    Deletes array from AWS S3 bucket.
+
+    # Signature
+
+        function array_delete(aws::AWSCore.AWSConfig,
+            bucket::String,path::String)
+
+    # Arguments
+
+    - `aws`: aws config created by AWSCore.aws_config
+    - `bucket`: name of AWS S3 bucket
+    - `path`: file key/path name
+
+    # Examples
+
+    - `A=array_delete(aws,"slimbucket","tmp/test/small")`: deletes array `a` from bucket `slimbucket` and path `tmp/test/small`
+
+    """
     function array_delete(aws::AWSCore.AWSConfig,bucket::String,path::String)
         s3_exists(aws, bucket, path) || error("AWSS3/array_delete: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
