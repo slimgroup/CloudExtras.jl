@@ -23,7 +23,7 @@ module AWSextras
     - `bucket`: name of AWS S3 bucket
     - `path`: file key/path name
     - `array`: dense numeric array
-    - `level`: compression level (1 is typically OK, anything above 5 is typically an over-kill)
+    - `level`: Blosc compression level (0-9); 1 is typically OK, anything above 5 is typically an over-kill
 
     # Examples
 
