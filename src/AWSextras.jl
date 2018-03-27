@@ -5,7 +5,7 @@ module AWSextras
     using ..common
 
     export array_put
-    function array_put{DT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,a::Array{DT};level::Int=1)
+    function array_put{DT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,a::DenseArray{DT};level::Int=1)
         cmp_max=(2*1020^3) #blosc compression max 2147483631 bytes < (2*1024^3)
         if sizeof(a)<cmp_max # single file
             szs=size(a)
