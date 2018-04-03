@@ -28,12 +28,28 @@ Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 	where
 	
 	- `aws` is output from `AWSCore.aws_config`
-	- `bucket` is AWS S3 bucket name
+	- `bucket` is AWS S3 bucket's name
 	- `path` is AWS S3 file key/path
+	- `a` is dense array of numbers
 	- `level` is compression level (0-9); 1 is typically good enough while anything above 5 is hardly ever usefull and computationally taxing
     - `max_size`: maximum array size (MB<=2000) before going into multi-part mode
 
 	Note! Arrays with sizes above 2000MB will be splitted into multiple, roughly same-size, files to reduce memory overhead while writing and reading arrays.
+
+1. putting/getting Any object for AWS S3 in module `CloudExtras.AWSextras`
+
+	- `any_put(aws::AWSCore.AWSConfig, bucket::String, path::String, obj)`
+	- `any_get(aws::AWSCore.AWSConfig, bucket::String, path::String)`
+	- `any_delete(aws::AWSCore.AWSConfig, bucket::String, path::String)`
+
+	where
+	
+	- `aws` is output from `AWSCore.aws_config`
+	- `bucket` is AWS S3 bucket's name
+	- `path` is AWS S3 file key/path
+	- `obj` is Julia object of any type
+	
+	Note! Objects cannot be bigger then 5GB in serialized form.
 
 2. to be continued
 

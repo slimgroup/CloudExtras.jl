@@ -4,12 +4,123 @@ module AWSextras
     using Blosc
     using ..common: file_parts
 
+    export any_put
+    """
+
+        julia> any_put(aws,bucket,path,array;[level])
+
+    Stores any object with sizeof smaller then 5GB to AWS S3 bucket.
+
+    # Signature
+
+        function any_put(aws::AWSCore.AWSConfig,
+            bucket::String,path::String,obj)
+
+    # Arguments
+
+    - `aws`: aws config created by AWSCore.aws_config
+    - `bucket`: name of AWS S3 bucket
+    - `path`: file key/path name
+    - `obj`: Any Julia object
+
+    # Examples
+
+    - `any_put(aws,"slimbucket","tmp/test/Any",obj)`: put Julia object `obj` into bucket `slimbucket` under path `tmp/test/Any`
+
+    # Notes:
+
+    - the object is stored in the bucket in serialized form
+    - use `any_delete` to delete object created with `any_put`
+
+    """
+    function any_put(aws::AWSCore.AWSConfig,bucket::String,path::String,obj)
+        size_max=min(5*1024^3) #single upload size < 5GB
+        sizeof(obj)<size_max || error("AWSS3/any_put: object too large for storing in AWS S3 bucket")
+        tags=Dict("creator"=>"SO-SLIM","type"=>"SerilizedObject")
+        buf=IOBuffer()
+        serialize(buf,obj)
+        objs=take!(buf)
+	    s3_put(aws, bucket, path, objs, tags=tags);
+        return nothing
+    end
+
+    export any_get
+    """
+
+        julia> any_get(aws,bucket,path)
+
+    Reads from AWS S3 bucket an object stored by `any_put`.
+
+    # Signature
+
+        function any_get(aws::AWSCore.AWSConfig,
+            bucket::String,path::String)
+
+    # Arguments
+
+    - `aws`: aws config created by AWSCore.aws_config
+    - `bucket`: name of AWS S3 bucket
+    - `path`: file key/path name
+
+    # Examples
+
+    - `O=any_get(aws,"slimbucket","tmp/test/Any")`: gets object `O` from bucket `slimbucket` and path `tmp/test/Any`
+
+    # Notes:
+
+    - the returned object is deserialized from the data stored in the bucket
+    - use `any_delete` to delete object created with `any_put`
+
+    """
+    function any_get(aws::AWSCore.AWSConfig,bucket::String,path::String)
+        s3_exists(aws, bucket, path) || error("AWSS3/any_get: file $path does not exist in $bucket.")
+        tags=s3_get_tags(aws, bucket, path);
+        (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/any_get: file $path in $bucket is unknown.")
+        (haskey(tags,"type")&&tags["type"]=="SerilizedObject") || error("AWSS3/any_get: file $path in $bucket does not have known type.")
+        objs=s3_get(aws, bucket, path);
+        buf=IOBuffer(objs)
+        obj=deserialize(buf)
+        return obj
+    end
+
+    export any_delete
+    """
+
+        julia> any_delete(aws,bucket,path)
+
+    Deletes from AWS S3 bucket an object stored by `any_put`.
+
+    # Signature
+
+        function any_delete(aws::AWSCore.AWSConfig,
+            bucket::String,path::String)
+
+    # Arguments
+
+    - `aws`: aws config created by AWSCore.aws_config
+    - `bucket`: name of AWS S3 bucket
+    - `path`: file key/path name
+
+    # Examples
+
+    - `A=any_delete(aws,"slimbucket","tmp/test/Any")`: deletes array `a` from bucket `slimbucket` and path `tmp/test/Any`
+
+    """
+    function any_delete(aws::AWSCore.AWSConfig,bucket::String,path::String)
+        s3_exists(aws, bucket, path) || error("AWSS3/any_get: file $path does not exist in $bucket.")
+        tags=s3_get_tags(aws, bucket, path);
+        (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/any_get: file $path in $bucket is unknown.")
+        (haskey(tags,"type")&&tags["type"]=="SerilizedObject") || error("AWSS3/any_get: file $path in $bucket does not have known type.")
+        s3_delete(aws, bucket, path);
+        return nothing
+    end
+
     export array_put
     """
 
         julia> array_put(aws,bucket,path,array;[level])
 
-    Saves array to AWS S3 bucket.
+    Stores an array to AWS S3 bucket.
 
     # Signature
 
@@ -30,9 +141,13 @@ module AWSextras
 
     - `array_put(aws,"slimbucket","tmp/test/small",a)`: put array `a` into bucket `slimbucket` under path `tmp/test/small`
 
+    # Notes:
+
+    - use `array_delete` to delete object created with `array_put`
+
     """
     function array_put{DT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,a::DenseArray{DT};level::Int=1,max_size::Int=2000)
-        max_size > 2000 && warn("S3 array_put: given max_size > 2000; using default 2000")
+        max_size > 2000 && warn("AWSS3/array_put: given max_size > 2000; using default 2000")
         cmp_max=min(2000*1024^2,max_size*1024^2) #blosc compression max 2147483631 bytes < (2*1024^3)
         if sizeof(a)<cmp_max # single file
             szs=size(a)
@@ -45,7 +160,7 @@ module AWSextras
 	        s3_put(aws, bucket, path, ac, tags=tags);
             return nothing
         else # multi-part files
-            #warn("S3 array_put: large array - going into multi-part mode";key="AWS S3 array_put",once=true)
+            #warn("AWSS3/array_put: large array - going into multi-part mode";key="AWS S3 array_put",once=true)
             szs=size(a)
             dims=length(szs)
             (nfiles,nelmts,parts,idxs,idxe)=file_parts(a,cmp_max)
@@ -76,7 +191,7 @@ module AWSextras
 
         julia> array_get(aws,bucket,path)
 
-    Reads array from AWS S3 bucket.
+    Reads from AWS S3 bucket an array stored by `array_put`.
 
     # Signature
 
@@ -92,6 +207,10 @@ module AWSextras
     # Examples
 
     - `A=array_get(aws,"slimbucket","tmp/test/small")`: gets array `a` from bucket `slimbucket` and path `tmp/test/small`
+
+    # Notes:
+
+    - use `array_delete` to delete object created with `array_put`
 
     """
     function array_get(aws::AWSCore.AWSConfig,bucket::String,path::String)
@@ -129,7 +248,7 @@ module AWSextras
             a=reshape(av,(szs...))
             return a
         else
-            error("AWSS3/array_get: file $path in $bucket is not an array.")
+            error("AWSS3/array_get: file $path in $bucket is not an array stored with array_put.")
         end
     end
 
@@ -138,7 +257,7 @@ module AWSextras
 
         julia> array_delete(aws,bucket,path)
 
-    Deletes array from AWS S3 bucket.
+    Deletes from AWS S3 bucket an array stored by `array_put`.
 
     # Signature
 
