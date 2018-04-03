@@ -34,27 +34,28 @@
         buf=IOBuffer()
         serialize(buf,obj)
         objs=take!(buf)
-	    s3_put(aws, bucket, path, objs, tags=tags);
+        s3_put(aws, bucket, path, objs, tags=tags);
         return nothing
     end
 
     export any_get
     """
 
-        julia> any_get(aws,bucket,path)
+        julia> any_get(aws,bucket,path;delete=false)
 
     Reads from AWS S3 bucket an object stored by `any_put`.
 
     # Signature
 
         function any_get(aws::AWSCore.AWSConfig,
-            bucket::String,path::String)
+            bucket::String,path::String;delete::Bool=false)
 
     # Arguments
 
     - `aws`: aws config created by AWSCore.aws_config
     - `bucket`: name of AWS S3 bucket
     - `path`: file key/path name
+    - `delete`: delete file key/path after reading
 
     # Examples
 
@@ -66,7 +67,7 @@
     - use `any_delete` to delete object created with `any_put`
 
     """
-    function any_get(aws::AWSCore.AWSConfig,bucket::String,path::String)
+    function any_get(aws::AWSCore.AWSConfig,bucket::String,path::String;delete::Bool=false)
         s3_exists(aws, bucket, path) || error("AWSS3/any_get: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
         (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/any_get: file $path in $bucket is unknown.")
@@ -74,6 +75,7 @@
         objs=s3_get(aws, bucket, path);
         buf=IOBuffer(objs)
         obj=deserialize(buf)
+        delete && any_delete(aws, bucket, path);
         return obj
     end
 

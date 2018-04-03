@@ -40,7 +40,7 @@
                 tags["dims"]="$(dims)"
                 for i=1:dims tags["n$i"]="$(szs[i])"; end
             ac=Blosc.compress(vec(a);level=level);
-	        s3_put(aws, bucket, path, ac, tags=tags);
+            s3_put(aws, bucket, path, ac, tags=tags);
             return nothing
         else # multi-part files
             #warn("AWSS3/array_put: large array - going into multi-part mode";key="AWS S3 array_put",once=true)
@@ -72,20 +72,21 @@
     export array_get
     """
 
-        julia> array_get(aws,bucket,path)
+        julia> array_get(aws,bucket,path;delete=false)
 
     Reads from AWS S3 bucket an array stored by `array_put`.
 
     # Signature
 
         function array_get(aws::AWSCore.AWSConfig,
-            bucket::String,path::String)
+            bucket::String,path::String;delete::Bool=false)
 
     # Arguments
 
     - `aws`: aws config created by AWSCore.aws_config
     - `bucket`: name of AWS S3 bucket
     - `path`: file key/path name
+    - `delete`: delete file key/path after reading
 
     # Examples
 
@@ -96,7 +97,7 @@
     - use `array_delete` to delete object created with `array_put`
 
     """
-    function array_get(aws::AWSCore.AWSConfig,bucket::String,path::String)
+    function array_get(aws::AWSCore.AWSConfig,bucket::String,path::String;delete::Bool=false)
         s3_exists(aws, bucket, path) || error("AWSS3/array_get: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
         (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/array_get: file $path in $bucket is unknown.")
@@ -106,8 +107,9 @@
             eval(parse("dims=$(tags["dims"])"))
             szs=Vector{Int}(dims)
             for i=1:dims n=tags["n$i"]; szs[i]=parse(n); end
-	        ac=s3_get(aws, bucket, path);
-	        a=reshape(Blosc.decompress(edt,ac),(szs...));
+            ac=s3_get(aws, bucket, path);
+            a=reshape(Blosc.decompress(edt,ac),(szs...));
+            delete && array_delete(aws, bucket, path);
             return a
         elseif tags["type"]=="metaArray" # multi-part files
             eval(parse("nfiles=$(tags["nfiles"])"))
@@ -129,6 +131,7 @@
                 av[idxs[i]:idxe[i]]=Blosc.decompress(edt,pc)
             end
             a=reshape(av,(szs...))
+            delete && array_delete(aws, bucket, path);
             return a
         else
             error("AWSS3/array_get: file $path in $bucket is not an array stored with array_put.")
