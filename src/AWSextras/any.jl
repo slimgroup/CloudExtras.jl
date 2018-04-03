@@ -1,7 +1,7 @@
     export any_put
     """
 
-        julia> any_put(aws,bucket,path,array;[level])
+        julia> any_put(aws,bucket,path,obj)
 
     Stores any object with sizeof smaller then 5GB to AWS S3 bucket.
 
@@ -97,7 +97,7 @@
 
     # Examples
 
-    - `A=any_delete(aws,"slimbucket","tmp/test/Any")`: deletes array `a` from bucket `slimbucket` and path `tmp/test/Any`
+    - `any_delete(aws,"slimbucket","tmp/test/Any")`: deletes object stored by `any_put` as `tmp/test/Any` and bucket `slimbucket`
 
     """
     function any_delete(aws::AWSCore.AWSConfig,bucket::String,path::String)

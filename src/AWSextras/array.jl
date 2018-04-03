@@ -155,7 +155,7 @@
 
     # Examples
 
-    - `A=array_delete(aws,"slimbucket","tmp/test/small")`: deletes array `a` from bucket `slimbucket` and path `tmp/test/small`
+    - `array_delete(aws,"slimbucket","tmp/test/small")`: deletes array stored by `array_put` as `tmp/test/small` and bucket `slimbucket`
 
     """
     function array_delete(aws::AWSCore.AWSConfig,bucket::String,path::String)
