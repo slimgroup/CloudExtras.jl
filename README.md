@@ -22,7 +22,7 @@ Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 1. putting/getting dense numerical numerical arrays for AWS S3 in module `CloudExtras.AWSextras`
 
 	- `array_put{DT<:Number}(aws::AWSCore.AWSConfig, bucket::String, path::String, a::DenseArray{DT}; level::Int=1,max_size::Int=2000)`
-	- `array_get(aws::AWSCore.AWSConfig, bucket::String, path::String)`
+	- `array_get(aws::AWSCore.AWSConfig, bucket::String, path::String; delete::Bool=false)`
 	- `array_delete(aws::AWSCore.AWSConfig, bucket::String, path::String)`
 
 	where
@@ -31,15 +31,16 @@ Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 	- `bucket` is AWS S3 bucket's name
 	- `path` is AWS S3 file key/path
 	- `a` is dense array of numbers
+	- `delete` flag to delete file after reading
 	- `level` is compression level (0-9); 1 is typically good enough while anything above 5 is hardly ever usefull and computationally taxing
-    - `max_size`: maximum array size (MB<=2000) before going into multi-part mode
+	- `max_size`: maximum array size (MB<=2000) before going into multi-part mode
 
 	Note! Arrays with sizes above 2000MB will be splitted into multiple, roughly same-size, files to reduce memory overhead while writing and reading arrays.
 
 1. putting/getting Any object for AWS S3 in module `CloudExtras.AWSextras`
 
 	- `any_put(aws::AWSCore.AWSConfig, bucket::String, path::String, obj)`
-	- `any_get(aws::AWSCore.AWSConfig, bucket::String, path::String)`
+	- `any_get(aws::AWSCore.AWSConfig, bucket::String, path::String; delete::Bool=false)`
 	- `any_delete(aws::AWSCore.AWSConfig, bucket::String, path::String)`
 
 	where
@@ -48,7 +49,8 @@ Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 	- `bucket` is AWS S3 bucket's name
 	- `path` is AWS S3 file key/path
 	- `obj` is Julia object of any type
-	
+	- `delete` flag to delete file after reading
+
 	Note! Objects cannot be bigger then 5GB in serialized form.
 
 2. to be continued
