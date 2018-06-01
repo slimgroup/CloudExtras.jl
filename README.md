@@ -16,11 +16,12 @@ or with GitHub account (and SSH keys registered) for full developer access:
 Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 ```
 
-From terminal prompt configure AWS credentiuals if not done alread:
+Configure AWS credentials if not done already or if needed. (On EC2 instances/containers use appropriate S3 role for EC2 if configured, otherwise run this configuration.) Use your AWS access keys and configure with command :
 
 ```
 aws configure
 ```
+
 
 ## Current functionality
 
