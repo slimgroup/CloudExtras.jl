@@ -16,6 +16,11 @@ or with GitHub account (and SSH keys registered) for full developer access:
 Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
 ```
 
+From terminal prompt configure AWS credentiuals if not done alread:
+
+```
+aws configure
+```
 
 ## Current functionality
 
