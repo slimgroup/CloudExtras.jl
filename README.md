@@ -27,8 +27,8 @@ aws configure
 
 1. putting/getting dense numerical numerical arrays for AWS S3 in module `CloudExtras.AWSextras`
 
-	- `array_put{DT<:Number}(aws::AWSCore.AWSConfig, bucket::String, path::String, a::DenseArray{DT}; level::Int=1,max_size::Int=2000)`
-	- `array_get(aws::AWSCore.AWSConfig, bucket::String, path::String; delete::Bool=false)`
+	- `array_put(aws::AWSCore.AWSConfig, bucket::String, path::String, a::DenseArray{Number}; level::Int=1,max_size::Int=2000)`
+	- `A = array_get(aws::AWSCore.AWSConfig, bucket::String, path::String; delete::Bool=false)`
 	- `array_delete(aws::AWSCore.AWSConfig, bucket::String, path::String)`
 
 	where
@@ -42,6 +42,17 @@ aws configure
 	- `max_size`: maximum array size (MB<=2000) before going into multi-part mode
 
 	Note! Arrays with sizes above 2000MB will be splitted into multiple, roughly same-size, files to reduce memory overhead while writing and reading arrays.
+
+1. putting/getting model arrays for AWS S3 in module `CloudExtras.AWSextras` - exactly like array_put/_get/_delete but with extra arguments for origins and deltas
+
+	- `model_put(aws::AWSCore.AWSConfig, bucket::String, path::String, a::DenseArray{Number}, o::Vector{Number}, d::Vector{Number}; level::Int=1,max_size::Int=2000)`
+	- `(M, o, d) = model_get(aws::AWSCore.AWSConfig, bucket::String, path::String; delete::Bool=false)`
+	- `model_delete(aws::AWSCore.AWSConfig, bucket::String, path::String)`
+
+	where
+	
+	- `o` is vector of origins
+	- `d` is vector of deltas
 
 1. putting/getting Any object for AWS S3 in module `CloudExtras.AWSextras`
 

@@ -6,7 +6,7 @@
 using AWSCore
 using CloudExtras.AWSextras
 
-aws = aws_config(region="us-west-2")
+aws = aws_config(region="us-east-1")
 
 a=randn(11,12,13);
 

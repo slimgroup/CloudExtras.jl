@@ -6,5 +6,6 @@ module AWSextras
 
     include("AWSextras/any.jl")
     include("AWSextras/array.jl")
+    include("AWSextras/model.jl")
 
 end
