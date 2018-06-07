@@ -30,7 +30,7 @@
     function any_put(aws::AWSCore.AWSConfig,bucket::String,path::String,obj)
         size_max=min(5*1024^3) #single upload size < 5GB
         sizeof(obj)<size_max || error("AWSS3/any_put: object too large for storing in AWS S3 bucket")
-        tags=Dict("creator"=>"SO-SLIM","type"=>"SerilizedObject")
+        tags=Dict("creator"=>"S3-SLIM","type"=>"SerilizedObject")
         buf=IOBuffer()
         serialize(buf,obj)
         objs=take!(buf)
@@ -70,7 +70,7 @@
     function any_get(aws::AWSCore.AWSConfig,bucket::String,path::String;delete::Bool=false)
         s3_exists(aws, bucket, path) || error("AWSS3/any_get: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
-        (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/any_get: file $path in $bucket is unknown.")
+        (haskey(tags,"creator")&&tags["creator"]=="S3-SLIM") || error("AWSS3/any_get: file $path in $bucket is unknown.")
         (haskey(tags,"type")&&tags["type"]=="SerilizedObject") || error("AWSS3/any_get: file $path in $bucket does not have known type.")
         objs=s3_get(aws, bucket, path);
         buf=IOBuffer(objs)
@@ -105,7 +105,7 @@
     function any_delete(aws::AWSCore.AWSConfig,bucket::String,path::String)
         s3_exists(aws, bucket, path) || error("AWSS3/any_get: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
-        (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/any_get: file $path in $bucket is unknown.")
+        (haskey(tags,"creator")&&tags["creator"]=="S3-SLIM") || error("AWSS3/any_get: file $path in $bucket is unknown.")
         (haskey(tags,"type")&&tags["type"]=="SerilizedObject") || error("AWSS3/any_get: file $path in $bucket does not have known type.")
         s3_delete(aws, bucket, path);
         return nothing

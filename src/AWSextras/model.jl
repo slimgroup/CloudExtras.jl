@@ -36,8 +36,10 @@
         cmp_max=min(2000*1024^2,max_size*1024^2) #blosc compression max 2147483631 bytes < (2*1024^3)
         szs=size(a)
         dims=length(szs)
+        length(os)==dims || error("AWSS3/model_put: length of origins does not match array dimensions")
+        length(ds)==dims || error("AWSS3/model_put: length of deltas does not match array dimensions")
         if sizeof(a)<cmp_max # single file
-            tags=Dict("creator"=>"SO-SLIM","type"=>"Model")
+            tags=Dict("creator"=>"S3-SLIM","type"=>"Model")
                 tags["eltype"]="$(AT)"
                 tags["dims"]="$(dims)"
                 tags["ns"]=join(map(i->(@sprintf "%d" szs[i]),1:dims),":")
@@ -49,7 +51,7 @@
         else # multi-part files
             #warn("AWSS3/model_put: large array - going into multi-part mode";key="AWS S3 model_put",once=true)
             (nfiles,nelmts,parts,idxs,idxe)=file_parts(a,cmp_max)
-                tags=Dict("creator"=>"SO-SLIM","type"=>"metaModel")
+                tags=Dict("creator"=>"S3-SLIM","type"=>"metaModel")
                 tags["nfiles"]="$(nfiles)"
                 tags["nelmts"]="$(nelmts)"
                 tags["eltype"]="$(AT)"
@@ -104,7 +106,7 @@
     function model_get(aws::AWSCore.AWSConfig,bucket::String,path::String;delete::Bool=false)
         s3_exists(aws, bucket, path) || error("AWSS3/model_get: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
-        (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/model_get: file $path in $bucket is unknown.")
+        (haskey(tags,"creator")&&tags["creator"]=="S3-SLIM") || error("AWSS3/model_get: file $path in $bucket is unknown.")
         haskey(tags,"type") || error("AWSS3/model_get: file $path in $bucket does not have known type.")
         if tags["type"]=="Model" # single file
             eval(parse("edt=$(tags["eltype"])"))
@@ -171,7 +173,7 @@
 
         s3_exists(aws, bucket, path) || error("AWSS3/model_delete: file $path does not exist in $bucket.")
         tags=s3_get_tags(aws, bucket, path);
-        (haskey(tags,"creator")&&tags["creator"]=="SO-SLIM") || error("AWSS3/model_delete: file $path in $bucket is unknown.")
+        (haskey(tags,"creator")&&tags["creator"]=="S3-SLIM") || error("AWSS3/model_delete: file $path in $bucket is unknown.")
         haskey(tags,"type") || error("AWSS3/model_delete: file $path in $bucket does not have known type.")
         if tags["type"]=="Model" # single file
             s3_delete(aws,bucket,path)
