@@ -7,13 +7,13 @@ Extra utilites for working with the Cloud platforms
 From julia prompt run the following if you will not need developer's write access or if you do not have GitHub account:
 
 ```
-Pkg.clone("https://github.com/slimgroup/CloudExtras.jl.git")
+Pkg.add(PackageSpec(url="https://github.com/slimgroup/CloudExtras.jl.git",rev="v07-devel"))
 ```
 
 or with GitHub account (and SSH keys registered) for full developer access:
 
 ```
-Pkg.clone("git@github.com:slimgroup/CloudExtras.jl.git")
+Pkg.develop(PackageSpec(url="git@github.com:slimgroup/CloudExtras.jl.git"))
 ```
 
 Configure AWS credentials if not done already or if needed. (On EC2 instances/containers use appropriate S3 role for EC2 if configured, otherwise run this configuration.) Use your AWS access keys and configure with command :
