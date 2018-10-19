@@ -29,9 +29,9 @@
     - use `model_delete` to delete object created with `model_put`
 
     """
-    function model_put{AT<:Number,OT<:Number,DT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,
+    function model_put(aws::AWSCore.AWSConfig,bucket::String,path::String,
             a::DenseArray{AT},os::Vector{OT},ds::Vector{DT};
-            level::Int=1,max_size::Int=2000)
+            level::Int=1,max_size::Int=2000) where {AT<:Number,OT<:Number,DT<:Number}
         max_size > 2000 && warn("AWSS3/model_put: given max_size > 2000; using default 2000")
         cmp_max=min(2000*1024^2,max_size*1024^2) #blosc compression max 2147483631 bytes < (2*1024^3)
         szs=size(a)
@@ -109,13 +109,13 @@
         (haskey(tags,"creator")&&tags["creator"]=="S3-SLIM") || error("AWSS3/model_get: file $path in $bucket is unknown.")
         haskey(tags,"type") || error("AWSS3/model_get: file $path in $bucket does not have known type.")
         if tags["type"]=="Model" # single file
-            eval(parse("edt=$(tags["eltype"])"))
-            eval(parse("dims=$(tags["dims"])"))
+            eval(Meta.parse("edt=$(tags["eltype"])"))
+            eval(Meta.parse("dims=$(tags["dims"])"))
             szs=parse.(Int,split(tags["ns"],":"))
             os=parse.(Float64,split(tags["os"],":"))
             ds=parse.(Float64,split(tags["ds"],":"))
             ac=s3_get(aws, bucket, path);
-            a=reshape(Blosc.decompress(edt,ac),(szs...));
+            a=reshape(Blosc.decompress(edt,ac),(szs...,));
             delete && model_delete(aws, bucket, path);
             return a,os,ds
         elseif tags["type"]=="metaModel" # multi-part files
@@ -138,7 +138,7 @@
                 pc=s3_get(aws, bucket, ppath);
                 av[idxs[i]:idxe[i]]=Blosc.decompress(edt,pc)
             end
-            a=reshape(av,(szs...))
+            a=reshape(av,(szs...,))
             delete && model_delete(aws, bucket, path);
             return a,os,ds
         else

@@ -29,8 +29,8 @@
     - use `array_delete` to delete object created with `array_put`
 
     """
-    function array_put{AT<:Number}(aws::AWSCore.AWSConfig,bucket::String,path::String,a::DenseArray{AT};
-            level::Int=1,max_size::Int=2000)
+    function array_put(aws::AWSCore.AWSConfig,bucket::String,path::String,a::DenseArray{AT};
+            level::Int=1,max_size::Int=2000) where {AT<:Number}
         max_size > 2000 && warn("AWSS3/array_put: given max_size > 2000; using default 2000")
         cmp_max=min(2000*1024^2,max_size*1024^2) #blosc compression max 2147483631 bytes < (2*1024^3)
         szs=size(a)
@@ -102,32 +102,32 @@
         (haskey(tags,"creator")&&tags["creator"]=="S3-SLIM") || error("AWSS3/array_get: file $path in $bucket is unknown.")
         haskey(tags,"type") || error("AWSS3/array_get: file $path in $bucket does not have known type.")
         if tags["type"]=="Array" # single file
-            eval(parse("edt=$(tags["eltype"])"))
-            eval(parse("dims=$(tags["dims"])"))
+            eval(Meta.parse("edt=$(tags["eltype"])"))
+            eval(Meta.parse("dims=$(tags["dims"])"))
             szs=parse.(Int,split(tags["ns"],":"))
             ac=s3_get(aws, bucket, path);
-            a=reshape(Blosc.decompress(edt,ac),(szs...));
+            a=reshape(Blosc.decompress(edt,ac),(szs...,));
             delete && array_delete(aws, bucket, path);
             return a
         elseif tags["type"]=="metaArray" # multi-part files
-            eval(parse("nfiles=$(tags["nfiles"])"))
-            eval(parse("nelmts=$(tags["nelmts"])"))
-            eval(parse("edt=$(tags["eltype"])"))
-            eval(parse("dims=$(tags["dims"])"))
+            eval(Meta.parse("nfiles=$(tags["nfiles"])"))
+            eval(Meta.parse("nelmts=$(tags["nelmts"])"))
+            eval(Meta.parse("edt=$(tags["eltype"])"))
+            eval(Meta.parse("dims=$(tags["dims"])"))
             szs=parse.(Int,split(tags["ns"],":"))
             dc=s3_get(aws, bucket, path);
             d=reshape(Blosc.decompress(Int,dc),(nfiles,3));
             parts=d[:,1]; idxs=d[:,2]; idxe=d[:,3];
             #println((nfiles,nelmts,parts,idxs,idxe))
             #for i=1:nfiles println((i,parts[i],idxs[i],idxe[i])) end
-            av=Vector{edt}(nelmts)
+            av=Vector{edt}(undef,nelmts)
             for i=1:nfiles
                 ppath=@sprintf("%s-parts/%6.6d",path,i)
                 #println(ppath)
                 pc=s3_get(aws, bucket, ppath);
                 av[idxs[i]:idxe[i]]=Blosc.decompress(edt,pc)
             end
-            a=reshape(av,(szs...))
+            a=reshape(av,(szs...,))
             delete && array_delete(aws, bucket, path);
             return a
         else
@@ -166,7 +166,7 @@
         if tags["type"]=="Array" # single file
             s3_delete(aws,bucket,path)
         elseif tags["type"]=="metaArray" # multi-part files
-            eval(parse("nfiles=$(tags["nfiles"])"))
+            eval(Meta.parse("nfiles=$(tags["nfiles"])"))
             for i=1:nfiles
                 ppath=@sprintf("%s-parts/%6.6d",path,i)
                 s3_delete(aws,bucket,ppath)
